@@ -39,7 +39,7 @@ labels = []
 datas = collections.defaultdict(list)
 for d in data:
     x = os.path.basename(d)
-    print(x)
+    print(x) #in ra dataset
     datas['images'].append(x)
     datas['label'].append([mapping[i] for i in x.split('.')[0]])
 df = pd.DataFrame(datas)
@@ -77,9 +77,24 @@ transform = T.Compose([
 
 train_data = CaptchaDataset(df_train, transform=transform)
 test_data = CaptchaDataset(df_test, transform=transform)
+def custom_collate_fn(batch):
+    images, labels = zip(*batch)  # Tách dữ liệu và nhãn
+    images = torch.stack(images)  # Xếp chồng các tensor hình ảnh
+    
+    # Tìm độ dài nhãn lớn nhất trong batch
+    max_label_length = max(len(label) for label in labels)
+    
+    # Pad tất cả các nhãn để có cùng độ dài
+    padded_labels = torch.zeros((len(labels), max_label_length), dtype=torch.int32)
+    for i, label in enumerate(labels):
+        padded_labels[i, :len(label)] = label
 
-train_loader = DataLoader(train_data, batch_size=16, shuffle=True)
-test_loader = DataLoader(test_data, batch_size=8)
+    return images, padded_labels
+train_loader = DataLoader(train_data, batch_size=16, shuffle=True, collate_fn=custom_collate_fn)
+test_loader = DataLoader(test_data, batch_size=8, collate_fn=custom_collate_fn)
+
+#train_loader = DataLoader(train_data, batch_size=16, shuffle=True)
+#test_loader = DataLoader(test_data, batch_size=8)
 
 class Bidirectional(nn.Module):
     def __init__(self, inp, hidden, out, lstm=True):
@@ -260,5 +275,5 @@ saving = {'state_dict':engine.model.state_dict(),
           'optimizer':engine.optimizer.state_dict(),
          'mapping':mapping,
          'mapping_inv':mapping_inv}
-torch.save(saving, './model.pth')
+torch.save(saving, 'model.pth')
 
