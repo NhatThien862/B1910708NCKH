@@ -2,7 +2,7 @@ from PIL import Image
 import torch
 import os
 import torchvision.transforms as T
-image_path = 'data/captcha-version-2-images/resized_samples'
+image_path = 'data/data2'
 # Các phép biến đổi ảnh
 transform = T.Compose([
     #T.Resize((105, 1853)), #note lại kich thước góc của ảnh cần train thôi ạ
